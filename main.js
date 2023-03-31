@@ -35,21 +35,68 @@ client.once(Events.ClientReady, (c) => {
 // Log in to Discord with your client's token
 client.login(TOKEN);
 
+//função para criar mensagens unicas
+function CreateEphemeral(content) {
+    return { content, ephemeral: true };
+}
 //listenner
-client.on(Events.InteractionCreate, async (interection) => {
-    if (!interection.isChatInputCommand()) return;
-    const command = interection.client.commands.get(interection.commandName);
-    if (!command) {
-        console.error(
-            `O comando ${interection.commandName} não possui interação`
+client.on(Events.InteractionCreate, async (interaction) => {
+    if (interaction.isAutocomplete()) {
+        const command = interaction.client.commands.get(
+            interaction.commandName
         );
+
+        if (!command) {
+            console.error(
+                `No command matching ${interaction.commandName} was found.`
+            );
+            return;
+        }
+
+        try {
+            await command.autocomplete(interaction);
+            await command.execute(interaction);
+        } catch (error) {
+            console.error(error);
+        }
     }
-    try {
-        await command.execute(interection);
-    } catch (error) {
-        console.error(error);
-        await interection.reply(
-            'Parece que estamos com problemas para executar esse comando, tente mais tarde!'
+
+    if (interaction.isChatInputCommand()) {
+        const command = interaction.client.commands.get(
+            interaction.commandName
         );
+
+        if (!command) {
+            console.error(
+                `O comando ${interaction.commandName} não possui interação`
+            );
+        }
+        if (interaction.commandName === 'ping') {
+            try {
+                await command.execute(interaction);
+                await interaction.followUp(
+                    CreateEphemeral('Só mais uminha po')
+                );
+            } catch (error) {
+                console.error(error);
+                await interaction.reply(
+                    'Parece que estamos com problemas para executar esse comando, tente mais tarde!'
+                );
+            }
+        }
+        if (interaction.commandName === 'welcome') {
+            try {
+                await command.execute(interaction);
+                await interaction.followUp(
+                    CreateEphemeral(
+                        'Você está sendo observado pelo StudyFlix, estudar é o caralho'
+                    )
+                );
+            } catch (error) {
+                await interaction.reply(
+                    'Parece que estamos com problemas para executar esse comando, tente mais tarde!'
+                );
+            }
+        }
     }
 });
